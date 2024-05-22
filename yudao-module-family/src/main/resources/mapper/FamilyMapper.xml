@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cn.iocoder.yudao.module.family.dao.FamilyMapper">
+
+    <select id="getFamilyTablePage" resultType="cn.iocoder.yudao.module.family.pojo.vo.FamilyPageRespVO">
+        select id, family_no, family_address, family_head_number, family_head_name, family_total_num, family_total_area, family_total_house_num
+        from (
+        select
+        f.id, f.family_no, f.family_address, f.family_head_number, fm2.name family_head_name, ifnull(fm.num, 0) family_total_num, ifnull(fn.area, 0) family_total_area, ifnull(fn.num, 0) family_total_house_num
+        from family f
+        left join (select count(1) num, family_no from family_member where deleted = false group by family_no) fm on fm.family_no = f.family_no
+        left join (select sum(house_area) area, count(1) num, family_no from family_house where deleted = false group by family_no) fn on fn.family_no = f.family_no
+        left join family_member fm2 on fm2.id_number = f.family_head_number and f.deleted = false and fm2.deleted = false
+                <where>
+                    f.deleted = false
+                    <if test="familyHeadName != null and familyHeadName != ''">
+                        and fm2.name like concat('%', #{familyHeadName}, '%')
+                    </if>
+                    <if test="familyMemberName != null and familyMemberName != ''">
+                        and f.family_no in (
+                            select family_no from family_member where name like concat('%', #{familyMemberName}, '%')
+                        )
+                    </if>
+                </where>
+        ) t
+        <where>
+            <if test="familyTotalNumsStart != null and familyTotalNumsStart != ''">
+                and t.family_total_num &gt;=  #{familyTotalNumsStart}
+            </if>
+            <if test="familyTotalNumsEnd != null and familyTotalNumsEnd != ''">
+                and t.family_total_num &lt;=  #{familyTotalNumsEnd}
+            </if>
+            <if test="houseTotalAreasStart != null and houseTotalAreasStart != ''">
+                and t.family_total_area &gt;=  #{houseTotalAreasStart}
+            </if>
+            <if test="houseTotalAreasEnd != null and houseTotalAreasEnd != ''">
+                and t.family_total_area &lt;=  #{houseTotalAreasEnd}
+            </if>
+        </where>
+        limit #{pageNo}, #{pageSize}
+    </select>
+
+    <select id="countTotal">
+        select count(1)
+        from ( select
+        f.id, f.family_no, f.family_address, f.family_head_number, fm2.name family_head_name, ifnull(fm.num, 0) family_total_num, ifnull(fn.area, 0) family_total_area
+        from family f
+        left join (select count(1) num, family_no from family_member where deleted = false group by family_no) fm on fm.family_no = f.family_no
+        left join (select sum(house_area) area, family_no from family_house where deleted = false group by family_no) fn on fn.family_no = f.family_no
+        left join family_member fm2 on fm2.id_number = f.family_head_number and f.deleted = false and fm2.deleted = false
+        <where>
+            f.deleted = false
+            <if test="familyHeadName != null and familyHeadName != ''">
+                and fm2.name like concat('%', #{familyHeadName}, '%')
+            </if>
+            <if test="familyMemberName != null and familyMemberName != ''">
+                and f.family_no in (
+                select family_no from family_member where name like concat('%', #{familyMemberName}, '%')
+                )
+            </if>
+        </where>
+        ) t
+        <where>
+            <if test="familyTotalNumsStart != null and familyTotalNumsStart != ''">
+                and t.family_total_num &gt;=  #{familyTotalNumsStart}
+            </if>
+            <if test="familyTotalNumsEnd != null and familyTotalNumsEnd != ''">
+                and t.family_total_num &lt;=  #{familyTotalNumsEnd}
+            </if>
+            <if test="houseTotalAreasStart != null and houseTotalAreasStart != ''">
+                and t.family_total_area &gt;=  #{houseTotalAreasStart}
+            </if>
+            <if test="houseTotalAreasEnd != null and houseTotalAreasEnd != ''">
+                and t.family_total_area &lt;=  #{houseTotalAreasEnd}
+            </if>
+        </where>
+    </select>
+
+    <select id="getOne" resultType="cn.iocoder.yudao.module.family.pojo.vo.FamilyPageRespVO">
+        select id, family_no, family_address, family_head_number, family_head_name, family_total_num, family_total_area, family_total_house_num
+        from (
+        select
+            f.id, f.family_no, f.family_address, f.family_head_number, fm2.name family_head_name, ifnull(fm.num, 0) family_total_num, ifnull(fn.area, 0) family_total_area, ifnull(fn.num, 0) family_total_house_num
+        from family f
+        left join (select count(1) num, family_no from family_member where deleted = false group by family_no) fm on fm.family_no = f.family_no
+        left join (select sum(house_area) area, count(1) num, family_no from family_house where deleted = false group by family_no) fn on fn.family_no = f.family_no
+        left join family_member fm2 on fm2.id_number = f.family_head_number and f.deleted = false and fm2.deleted = false
+        <where>
+            and f.deleted = false
+            <if test="id != null and id != ''">
+                and f.id = #{id}
+            </if>
+        </where>
+        ) t
+    </select>
+</mapper>
